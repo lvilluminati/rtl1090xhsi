@@ -117,6 +117,9 @@ namespace rtl1090XHSI
         public float[] delta = new float[ADSB_END];
         public float[] smoothval = new float[ADSB_END];
 
+        // TEST 'GLOBAL' FLOAT FOR LONGITUDE
+        public float global_logitude = 0.0f;
+
         public Form1()
         {
             InitializeComponent();
@@ -203,6 +206,10 @@ namespace rtl1090XHSI
                 System.Globalization.NumberStyles style = System.Globalization.NumberStyles.AllowDecimalPoint;
                 System.Globalization.CultureInfo culture = System.Globalization.CultureInfo.CreateSpecificCulture("en-US");
 
+                // ASSIGN TEST GLOBAL LONGITUDE
+                //global_logitude = Single.Parse(data[ADSB_LON]); //Causes exceptions sometimes
+                Single.TryParse(data[ADSB_LON], out global_logitude);
+
                 for (int i = 0; i < ADSB_END; i++)
                 {
                     float newval = 0;
@@ -255,21 +262,25 @@ namespace rtl1090XHSI
             setSimData(send_buffer, 2, SIM_COCKPIT_ELECTRICAL_AVIONICS_ON, 1.0f);
             setSimData(send_buffer, 3, SIM_FLIGHTMODEL_POSITION_GROUNDSPEED, smoothval[ADSB_GS] / 1.9438445f);
             setSimData(send_buffer, 4, SIM_FLIGHTMODEL_POSITION_TRUE_AIRSPEED, smoothval[ADSB_TAS] / 1.9438445f);
-            setSimData(send_buffer, 5, SIM_FLIGHTMODEL_POSITION_MAGPSI, smoothval[ADSB_HEADING]);
+            //setSimData(send_buffer, 5, SIM_FLIGHTMODEL_POSITION_MAGPSI, smoothval[ADSB_HEADING]);
+            setSimData(send_buffer, 5, SIM_FLIGHTMODEL_POSITION_MAGPSI, smoothval[ADSB_TRUETRACK]); // ADSB is not sending HDG, set to TRUETRACK instead
             setSimData(send_buffer, 6, SIM_FLIGHTMODEL_POSITION_HPATH, smoothval[ADSB_TRUETRACK]);
             setSimData(send_buffer, 7, SIM_FLIGHTMODEL_POSITION_LATITUDE, smoothval[ADSB_LAT]);
-            setSimData(send_buffer, 8, SIM_FLIGHTMODEL_POSITION_LONGITUDE, smoothval[ADSB_LON]);
+            //setSimData(send_buffer, 8, SIM_FLIGHTMODEL_POSITION_LONGITUDE, smoothval[ADSB_LON]); // XHCI is not receiving the Longitude, try using raw value
+            setSimData(send_buffer, 8, SIM_FLIGHTMODEL_POSITION_LONGITUDE, global_logitude);  // This is confirmed to work, but it's hacky.
+
             setSimData(send_buffer, 9, SIM_FLIGHTMODEL_POSITION_PHI, smoothval[ADSB_BANKANGLE]);
             setSimData(send_buffer, 10, SIM_FLIGHTMODEL_POSITION_ELEVATION, smoothval[ADSB_ALT] * 0.3048f);
             setSimData(send_buffer, 11, SIM_FLIGHTMODEL_POSITION_Y_AGL, smoothval[ADSB_ALT] * 0.3048f);
-            setSimData(send_buffer, 12, SIM_COCKPIT2_GAUGES_INDICATORS_AIRSPEED_KTS_PILOT, smoothval[ADSB_IAS]);
+            //setSimData(send_buffer, 12, SIM_COCKPIT2_GAUGES_INDICATORS_AIRSPEED_KTS_PILOT, smoothval[ADSB_IAS]);
+            setSimData(send_buffer, 12, SIM_COCKPIT2_GAUGES_INDICATORS_AIRSPEED_KTS_PILOT, smoothval[ADSB_GS]); // ADSB is not sending IAS, set to GS instead
             setSimData(send_buffer, 13, SIM_COCKPIT2_GAUGES_INDICATORS_ALTITUDE_FT_PILOT, smoothval[ADSB_ALT]);
             setSimData(send_buffer, 14, SIM_COCKPIT2_GAUGES_INDICATORS_VVI_FPM_PILOT, smoothval[ADSB_VRATE]);
             setSimData(send_buffer, 15, SIM_COCKPIT_SWITCHES_EFIS_SHOWS_AIRPORTS, 1.0f);
             setSimData(send_buffer, 16, SIM_COCKPIT_SWITCHES_EFIS_SHOWS_WAYPOINTS, 1.0f);
             setSimData(send_buffer, 17, SIM_COCKPIT_SWITCHES_EFIS_SHOWS_VORS, 1.0f);
             setSimData(send_buffer, 18, SIM_COCKPIT_SWITCHES_EFIS_SHOWS_NDBS, 1.0f);
-            setSimData(send_buffer, 19, SIM_COCKPIT_SWITCHES_EFIS_MAP_RANGE_SELECTOR, 2.0f);
+            setSimData(send_buffer, 19, SIM_COCKPIT_SWITCHES_EFIS_MAP_RANGE_SELECTOR, 1.0f);
             setSimData(send_buffer, 20, SIM_COCKPIT_RADIOS_TRANSPONDER_MODE, 1.0f);
             setSimData(send_buffer, 21, SIM_COCKPIT_RADIOS_TRANSPONDER_CODE, smoothval[ADSB_IDENTITY]);
             var checkedButton = groupBox1.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Checked);
